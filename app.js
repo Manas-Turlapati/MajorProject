@@ -22,14 +22,15 @@ const dbUrl = process.env.ATLASDB_URL;
 app.set("view engine", "ejs"); //for ejs
 app.set("views", path.join(__dirname, "views"));
 app.engine("ejs", ejsMate);
+const PORT = process.env.PORT || 3000;
 async function main() {
   await mongoose.connect(dbUrl);
 }
 main()
   .then(() => {
     console.log("Mongodb connected successfully");
-    app.listen(3000, () => {
-      console.log("App is listening on port 3000...");
+    app.listen(PORT, () => {
+      console.log(`App is listening on port ${PORT}...`);
     });
   })
   .catch((err) => {
@@ -48,7 +49,7 @@ const store = MongoStore.create({
   },
   touchAfter: 24 * 3600,
 });
-store.on("error", () => {
+store.on("error", (err) => {
   console.log("Error in mongo session store", err);
 });
 const sessionOptions = {
@@ -59,7 +60,7 @@ const sessionOptions = {
   cookie: {
     expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    httpOnly: true, //security purposes to avoid cross scripting attacks not needed details just know it
+    httpOnly: true,
   },
 };
 // app.get("/", (req, res) => {
@@ -72,15 +73,7 @@ app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser()); //to create and store the information of the user during a session
 passport.deserializeUser(User.deserializeUser()); //to delete the information of the user when the session is closed
-// app.get("/demo", async (req, res) => {
-//   let fakeUser = new User({
-//     email: "student@gmail.com",
-//     username: "delta-student",
-//   });
-//   //dont put password in the document creation or user creation
-//   const registeredUser = await User.register(fakeUser, "helloworld");
-//   res.send(registeredUser);
-// });
+
 app.use((req, res, next) => {
   res.locals.success = req.flash("success");
   res.locals.error = req.flash("error");
